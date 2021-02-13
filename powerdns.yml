@@ -1,0 +1,7 @@
+---
+- hosts:
+  vars:
+  tasks:
+    - name: Deploy powerdns full setup
+      include_tasks:
+        name: powerdns
