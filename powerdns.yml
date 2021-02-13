@@ -2,6 +2,5 @@
 - hosts:
   vars:
   tasks:
-    - name: Deploy powerdns full setup
-      include_tasks:
+    - include_role:
         name: powerdns
