@@ -1,0 +1,63 @@
+# Variables needed db_user and db_pwd
+---
+# PowerDNS Authoritative Server - version 4.4.X 
+- name: Create the file '/etc/apt/sources.list.d/pdns.list' with this content:
+  apt_repository:
+    repo: deb [arch=amd64] http://repo.powerdns.com/debian buster-auth-44 main
+    state: present
+    filename: pdns
+- name: Add this to '/etc/apt/preferences.d/pdns'
+  copy:
+    src: pdns
+    dest: /etc/apt/preferences.d/pdns
+- name: Add apt key
+  apt_key: 
+    url: https://repo.powerdns.com/FD380FBB-pub.asc
+    #    state: present
+    - name: Install pdns-server and mariadb-server
+  package:
+    name: 
+      - pdns-server
+      - pdns-backend-mysql
+      - mariadb-server
+    #    state: present
+- name: Run myseql_secure_installation script to init DB
+  command: |
+    /usr/bin/mysql_secure_installation <<EOF
+
+    y
+    testtest
+    testtest
+    y
+    y
+    y
+    y
+    EOF
+- name: Change default innodb_log_file_size
+  lineinfile:
+    path: /etc/mysql/mariadb.conf.d/60-customizations.cnf
+    line: innodb_log_file_size = 64MB
+    create: yes
+- name: Restart service
+  service:
+    name: mariadb
+    state: restarted
+- name: Copy dump
+  copy:
+    scr: powerdns.sql
+    dest: /tmp/powerdns.sql
+- name: Restore database
+  mysql_db:
+    name: powerdns
+    state: import
+    target: /tmp/powerdns.sql
+- name: Create pdns user
+  mysql_user:
+    name: pdns
+    password: secret
+    priv: '*powerdns.*:ALL,GRANT'
+- name: Creare MariaDB pdns config file
+  copy:
+    src: pdns.local.gmysql.conf
+    dest: /etc/powerdns/pdns.d/pdns.local.gmysql.conf
+...
